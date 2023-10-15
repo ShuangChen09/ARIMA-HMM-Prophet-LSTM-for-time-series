@@ -1,0 +1,29 @@
+#prepare data
+new_column_names={'Date': 'ds', 'Value': 'y'}
+data_renamed=newdf.rename(columns=new_column_names)
+#train the model
+model=Prophet(yearly_seasonality=True,growth='linear')
+model.fit(data_renamed)
+#adjust the format of data
+future=model.make_future_dataframe(periods=60,freq='M')
+forecast=model.predict(future)
+forecast_df=forecast[['ds','yhat','yhat_lower','yhat_upper']]
+prophet_fitted_values=forecast_df.head(905)['yhat']
+prophet_predcited_values=forecast_df['yhat'].tail(60)
+#model evaluation
+print("prophetMSE=",round(MSE(newdf['Value'],prophet_fitted_values),4))
+print("prophetMADE=",round(MADE(newdf['Value'],prophet_fitted_values),4))
+#visualization
+plt.style.use(['science','ieee'])
+plt.grid (False)
+plt.plot(newdf['Date'],newdf['Value'], label='Original Data')
+plt.plot(prophet_fitted_values,label='Fitted Values')
+plt.plot(prophet_predcited_values,label='Predicted Values',linestyle='-')
+plt.xticks(range(0, 905, 180),rotation=0,fontsize=5)
+plt.yticks(fontsize=5)
+plt.ylabel('Unemployment Rate',fontsize=6)
+plt.legend(fontsize='small')
+plt.title('Results for Prophet Model',fontsize=8)
+plt.savefig('Prophet.png', transparent=True,dpi=1000)
+plt.show()
+plt.clf()
