@@ -1,0 +1,18 @@
+#visualization
+fig, ax = plt.subplots(figsize=(14,6))
+sns.barplot(x='Date', y='Value', data=newdf, ax=ax)
+plt.xticks(rotation=0)
+plt.xticks(range(0, 905, 180))
+plt.style.use('seaborn-whitegrid')
+plt.show()
+#line chart
+plt.style.use('science')
+plt.plot(newdf['Date'],newdf['Value'])
+plt.grid (False)
+plt.ylabel('Unemployment Rate',fontsize=6)
+plt.xticks(range(0, 905, 180),fontsize=5)
+plt.yticks(fontsize=5)
+plt.savefig('firstdata.png', transparent=True,dpi=1000)
+plt.show()
+plt.clf()
+
