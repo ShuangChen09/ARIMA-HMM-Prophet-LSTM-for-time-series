@@ -1,4 +1,4 @@
-#prepare data
+##prepare data
 data=pd.read_excel(r"C:\Users\LX\Desktop\dataset.xlsx").iloc[:, 1:3]['Value']
 train_data=data[:905]
 train_data=np.array(train_data).reshape(-1, 1)
