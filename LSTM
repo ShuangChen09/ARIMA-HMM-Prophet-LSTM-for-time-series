@@ -1,0 +1,87 @@
+#Define a function to observe the training process
+def print_history1(history):
+    # Plot the training and validation accuracy values.
+    plt.style.use(['science','ieee'])
+    plt.grid (False)
+    plt.plot(history.history['accuracy'],linewidth=1.0,color='b')
+    plt.title('Accuracy',fontsize=14)
+    plt.xlabel('Epoch')
+    plt.legend(['accuracy'])
+    plt.savefig('modelaccuracy.png', transparent=True,dpi=1000)
+    plt.show()
+
+def print_history2(history):
+    plt.style.use(['science','ieee'])
+    plt.grid (False)
+    plt.plot(history.history['loss'],linewidth=1.0,color='b')
+    plt.title('Loss',fontsize=14)
+    plt.xlabel('Epoch')
+    plt.legend(['loss'])
+    plt.savefig('modelloss.png', transparent=True,dpi=1000)
+    plt.show()
+
+#predict the current value using the past 20 historical data points
+sequence_length=20
+#build a simple LSTM model
+lstmmodel=Sequential()
+lstmmodel.add(LSTM(128,activation='sigmoid',input_shape=(sequence_length,1)))
+lstmmodel.add(Dropout(0.3))
+lstmmodel.add(Dense(1))
+lstmmodel.compile(loss='mean_squared_error',optimizer='adam',metrics=['accuracy'])
+
+##prepare data
+data=pd.read_excel(r"C:\Users\LX\Desktop\dataset.xlsx").iloc[:,1:3]['Value']
+train_data=data[:905]
+# Define helper functions to generate training sets and labels
+def create_sequences(data, seq_length):
+    X = []
+    y = []
+    for i in range(len(data) - seq_length):
+        X.append(data[i:i+seq_length])
+        y.append(data[i+seq_length])
+    return np.array(X), np.array(y)
+# Set the sequence length and prediction steps.
+sequence_length=20
+sequence_length=int(sequence_length)
+prediction_steps=60
+prediction_steps=int(prediction_steps)
+# Create training sets and labels.
+X_train, y_train=create_sequences(train_data, sequence_length)
+X_train=X_train.reshape(885,20,1)
+
+#train the model
+history=lstmmodel.fit(X_train, y_train, epochs=500, batch_size=16)
+#Perform rolling forecasts using the trained model.
+predicted_values=[]
+last_sequence=X_train[-1]  # use the last sequence of the training set as a starting point
+for _ in range(prediction_steps):
+    predicted_value=lstmmodel.predict(last_sequence.reshape(1, sequence_length, 1))
+    predicted_values.append(predicted_value[0, 0])
+    last_sequence=np.append(last_sequence[1:], predicted_value[0, 0])
+
+#Observe the training process with the help of the function defined earlier
+print_history1(history)
+print_history2(history)
+
+lstm_predicted_values=predicted_values
+lstm_fitted_values=lstmmodel.predict(X_train)#Note that there are no fitted values for the first 20 times
+#model evaluation
+print("lstmMSE=",round(MSE(np.array(newdf['Value'][20:]).reshape(-1,1),lstm_fitted_values),4))
+print("lstmMADE=",round(MADE(np.array(newdf['Value'][20:]).reshape(-1,1),lstm_fitted_values),4))
+#visualization
+plt.style.use(['science','ieee'])
+plt.grid (False)
+plt.plot(newdf['Date'],newdf['Value'], label='Original Data')
+plt.plot(range(20, len(data)),lstmmodel.predict(X_train), label='Fitted Values')
+plt.plot(range(len(data), len(data) + len(lstm_predicted_values)),lstm_predicted_values, label='Predicted Values',linestyle='-')
+plt.xticks(range(0, 905, 180),rotation=0,fontsize=5)
+plt.yticks(fontsize=5)
+plt.ylabel('Unemployment Rate',fontsize=6)
+plt.legend(fontsize='small')
+plt.title('Results for LSTM Model',fontsize=8)
+plt.savefig('LSTM.png', transparent=True,dpi=1000)
+plt.show()
+plt.clf()
+
+
+
